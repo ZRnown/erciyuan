@@ -1,0 +1,26 @@
+{
+  "name": "discord-protected-attachment-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Discord 受保护附件机器人：点赞/评论/口令解锁后自动私信附件",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node scripts/start.js",
+    "register": "node src/discord/registerCommands.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "discord.js": "^14.19.3",
+    "dotenv": "^16.5.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
+  }
+}
