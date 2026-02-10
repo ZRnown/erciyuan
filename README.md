@@ -59,7 +59,7 @@ npm start
 ## 环境变量
 
 - `DISCORD_TOKEN`：机器人 Token
-- `DISCORD_CLIENT_ID`：应用 ID
+- `DISCORD_CLIENT_ID`：应用 ID（可选；留空时注册命令会自动从 Token 解析）
 - `DISCORD_GUILD_ID`：测试服务器 ID（可选）
 - `DISCORD_PROXY_URL`：Discord 网络代理（可选，优先级高于 `HTTPS_PROXY`）
 - `DB_PATH`：数据库路径（默认 `./data/bot.db`）

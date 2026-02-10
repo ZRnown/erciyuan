@@ -19,7 +19,7 @@ test("asset custom id can be encoded and parsed", () => {
   });
 });
 
-test("createGatePanel builds components-v2 card with owner + claim actions", () => {
+test("createGatePanel builds components-v2 card with claim actions only", () => {
   const panel = createGatePanel({
     id: "asset-1",
     baseMode: "reaction_or_comment",
@@ -40,6 +40,7 @@ test("createGatePanel builds components-v2 card with owner + claim actions", () 
   assert.equal(textDisplays.some((content) => content.includes("作品发布处")), true);
   assert.equal(textDisplays.some((content) => content.includes("Tips")), true);
   assert.equal(textDisplays.some((content) => content.includes("获取作品需求")), true);
+  assert.equal(textDisplays.some((content) => content.includes("作者专属交互")), false);
   assert.equal(textDisplays.some((content) => content.includes("> ")), false);
   assert.equal(textDisplays.some((content) => content.includes("│ ")), false);
 
@@ -48,11 +49,11 @@ test("createGatePanel builds components-v2 card with owner + claim actions", () 
     .flatMap((row) => row.components);
   const customIds = allButtons.map((button) => button.custom_id).filter(Boolean);
 
-  assert.equal(customIds.includes(buildAssetCustomId("remove_gate", "asset-1")), true);
-  assert.equal(customIds.includes(buildAssetCustomId("replace_gate", "asset-1")), true);
-  assert.equal(customIds.includes(buildAssetCustomId("toggle_pin", "asset-1")), true);
   assert.equal(customIds.includes(buildAssetCustomId("download", "asset-1")), true);
   assert.equal(customIds.includes(buildAssetCustomId("passcode", "asset-1")), true);
+  assert.equal(customIds.includes(buildAssetCustomId("remove_gate", "asset-1")), false);
+  assert.equal(customIds.includes(buildAssetCustomId("replace_gate", "asset-1")), false);
+  assert.equal(customIds.includes(buildAssetCustomId("toggle_pin", "asset-1")), false);
 });
 
 test("createStatementConfirmPanel supports ephemeral flags", () => {

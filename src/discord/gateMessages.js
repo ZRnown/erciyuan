@@ -73,21 +73,6 @@ export function createGatePanel(asset) {
   const policy = parseAccessPolicy(asset.baseMode, asset.passcodeEnabled);
   const quotaText = formatQuotaPolicy(asset.quotaPolicy);
 
-  const ownerRemoveButton = new ButtonBuilder()
-    .setCustomId(buildAssetCustomId("remove_gate", asset.id))
-    .setLabel("⚠️ 移除本条发布处")
-    .setStyle(ButtonStyle.Danger);
-
-  const ownerReplaceButton = new ButtonBuilder()
-    .setCustomId(buildAssetCustomId("replace_gate", asset.id))
-    .setLabel("🆕 放置新的作品发布处")
-    .setStyle(ButtonStyle.Success);
-
-  const ownerPinButton = new ButtonBuilder()
-    .setCustomId(buildAssetCustomId("toggle_pin", asset.id))
-    .setLabel("📌 标注/取消标注本消息")
-    .setStyle(ButtonStyle.Primary);
-
   const claimRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(buildAssetCustomId("download", asset.id))
@@ -128,15 +113,6 @@ export function createGatePanel(asset) {
         ].join("\n"),
       ),
     )
-    .addSeparatorComponents(new SeparatorBuilder())
-    .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        "### 作者专属交互",
-      ),
-    )
-    .addActionRowComponents(new ActionRowBuilder().addComponents(ownerRemoveButton))
-    .addActionRowComponents(new ActionRowBuilder().addComponents(ownerReplaceButton))
-    .addActionRowComponents(new ActionRowBuilder().addComponents(ownerPinButton))
     .addSeparatorComponents(new SeparatorBuilder())
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(`作品ID: ${asset.id}`))
     .addActionRowComponents(claimRow);

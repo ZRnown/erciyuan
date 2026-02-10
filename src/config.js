@@ -26,7 +26,8 @@ function parsePositiveInt(value, fallback) {
 
 export const config = {
   token: required("DISCORD_TOKEN"),
-  clientId: required("DISCORD_CLIENT_ID"),
+  // Optional: register script can auto-resolve application id from token.
+  clientId: process.env.DISCORD_CLIENT_ID ?? "",
   guildId: process.env.DISCORD_GUILD_ID ?? "",
   dbPath: process.env.DB_PATH
     ? path.resolve(process.env.DB_PATH)

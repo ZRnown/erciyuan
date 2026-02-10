@@ -15,13 +15,40 @@ const rest = new REST({
 
 const payload = buildCommands().map((command) => command.toJSON());
 
-const route = config.guildId
-  ? Routes.applicationGuildCommands(config.clientId, config.guildId)
-  : Routes.applicationCommands(config.clientId);
+async function resolveClientId() {
+  const configuredId = String(config.clientId ?? "").trim();
+  if (configuredId) {
+    return configuredId;
+  }
 
-const scope = config.guildId ? `guild ${config.guildId}` : "global";
+  const routeCandidates = [Routes.currentApplication(), Routes.oauth2CurrentApplication()];
+  let lastError = null;
+
+  for (const route of routeCandidates) {
+    try {
+      const app = await rest.get(route);
+      if (app?.id) {
+        console.log(`Auto resolved application id: ${app.id}`);
+        return app.id;
+      }
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw new Error(
+    `未设置 DISCORD_CLIENT_ID，且无法通过 Token 自动获取应用 ID。${lastError instanceof Error ? ` 原因：${lastError.message}` : ""}`,
+  );
+}
 
 async function main() {
+  const clientId = await resolveClientId();
+  const route = config.guildId
+    ? Routes.applicationGuildCommands(clientId, config.guildId)
+    : Routes.applicationCommands(clientId);
+
+  const scope = config.guildId ? `guild ${config.guildId}` : "global";
+
   console.log(`Registering ${payload.length} slash commands to ${scope} ...`);
   await rest.put(route, { body: payload });
   console.log("Slash commands registered.");
