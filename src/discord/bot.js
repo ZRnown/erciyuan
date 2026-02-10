@@ -200,6 +200,22 @@ function formatDeliveredAt(timestamp) {
   }
 }
 
+function buildAssetPostLink(asset) {
+  const guildId = String(asset?.guildId ?? "").trim();
+  const channelId = String(asset?.gateChannelId ?? "").trim();
+
+  if (guildId && channelId) {
+    return `https://discord.com/channels/${guildId}/${channelId}`;
+  }
+
+  const sourceUrl = String(asset?.sourceUrl ?? "").trim();
+  if (sourceUrl) {
+    return sourceUrl;
+  }
+
+  return "未知链接";
+}
+
 async function sendTraceMessage({ client, traceChannelId, asset, userId, deliveredAt }) {
   if (!traceChannelId) {
     return;
@@ -222,6 +238,7 @@ async function sendTraceMessage({ client, traceChannelId, asset, userId, deliver
         `用户：<@${userId}>`,
         `用户ID：${userId}`,
         `作品ID：${asset.id}`,
+        `帖子链接：${buildAssetPostLink(asset)}`,
         `文件：${fileNames || "未知文件"}`,
         `领取时间：${formatDeliveredAt(deliveredAt)}`,
       ].join("\n"),
