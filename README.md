@@ -40,9 +40,11 @@
   - Attach Files
   - Use Slash Commands
   - Send Messages in Threads
-  - Message Content Intent（用于评论判定）
 
 ## 安装与启动
+
+> 无需开启 Message Content Intent（已不请求该特权意图）。
+
 
 ```bash
 npm install

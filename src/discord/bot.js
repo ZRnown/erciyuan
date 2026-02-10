@@ -1367,7 +1367,6 @@ export function createBot({
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.GuildMessageReactions,
-      GatewayIntentBits.MessageContent,
       GatewayIntentBits.DirectMessages,
     ],
     partials: [Partials.Message, Partials.Channel, Partials.Reaction],

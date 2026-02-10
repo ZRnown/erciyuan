@@ -40,11 +40,7 @@ function inferCardName(asset) {
   return trimmed || firstName;
 }
 
-function inferAttachmentTitle(attachment, index) {
-  if (index === 0 && /json/i.test(attachment?.name ?? "")) {
-    return "JSON角色卡";
-  }
-
+function inferAttachmentTitle(_attachment, index) {
   return `附件${index + 1}`;
 }
 
@@ -72,7 +68,6 @@ function buildMetaText(asset, quotaText, sentAt) {
     `链接：${asset?.sourceUrl ?? "未知"}`,
     `作者：${asset?.ownerUserId ? `<@${asset.ownerUserId}>` : "未知"}`,
     `卡名：${inferCardName(asset)}`,
-    "角色名：[ / ]",
     quotaText ? `您今天的下载额度：${quotaText}` : null,
   ]
     .filter(Boolean)
