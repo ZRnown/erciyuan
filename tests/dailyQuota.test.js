@@ -16,15 +16,16 @@ test("evaluateDailyQuota blocks when daily-limited and quota exhausted", () => {
   });
 
   assert.equal(result.allowed, false);
-  assert.match(result.reason, /今日下载额度已用完/);
+  assert.match(result.reason, /获取次数到达上限/);
 });
 
-test("evaluateDailyQuota allows open-share even when quota exhausted", () => {
+test("evaluateDailyQuota still blocks when open-share quota exhausted", () => {
   const result = evaluateDailyQuota({
     quotaPolicy: "open_share",
     dailyLimit: 10,
     usedToday: 10,
   });
 
-  assert.equal(result.allowed, true);
+  assert.equal(result.allowed, false);
+  assert.match(result.reason, /获取次数到达上限/);
 });
