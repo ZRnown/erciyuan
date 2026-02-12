@@ -363,7 +363,7 @@ async function claimIfEligible({ client, storage, asset, userId, dailyDownloadLi
     usedToday,
   });
 
-  if (!quotaCheck.allowed && !progress.deliveredAt) {
+  if (!quotaCheck.allowed) {
     return {
       success: false,
       reason: quotaCheck.reason,
