@@ -11,6 +11,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
+import { randomUUID } from "node:crypto";
 
 import { buildThreadTopLink } from "../domain/threadTop.js";
 import { parseDiscordMessageLink } from "../domain/messageLink.js";
@@ -248,6 +249,26 @@ async function sendTraceMessage({ client, traceChannelId, asset, userId, deliver
   }
 }
 
+async function deleteAssetWithFiles({ storage, fileStore, assetId }) {
+  const asset = storage.getAssetById(assetId);
+  if (!asset) {
+    return false;
+  }
+
+  const deleted = storage.deleteAssetById(assetId);
+  if (!deleted) {
+    return false;
+  }
+
+  if (fileStore?.enabled) {
+    await fileStore.deleteFilesForAttachments(asset.attachments).catch((error) => {
+      console.error(`Cleanup mirrored files failed for asset ${assetId}:`, error);
+    });
+  }
+
+  return true;
+}
+
 async function deliverAssetToUser({ client, storage, asset, userId, quotaText }) {
   const progress = storage.getProgress(asset.gateMessageId, userId);
   const alreadyDelivered = Boolean(progress?.deliveredAt);
@@ -437,6 +458,7 @@ function parseRuleOptions(interaction) {
 async function publishAssetPanel({
   client,
   storage,
+  fileStore,
   guildId,
   gateChannel,
   gateChannelId,
@@ -462,25 +484,55 @@ async function publishAssetPanel({
     throw new Error("启用提取码后必须输入提取码内容。");
   }
 
-  const asset = storage.createAsset({
-    guildId,
-    ownerUserId,
-    gateChannelId,
-    sourceType,
-    sourceChannelId,
-    sourceMessageId,
-    sourceUrl,
-    unlockMode: mode,
-    baseMode: mode,
-    passcodeEnabled,
-    passwordHash: passcodeEnabled ? hashPassword(passcode.trim(), passwordSalt) : null,
-    quotaPolicy,
-    statementEnabled,
-    statementText,
-    attachments,
-  });
+  let mirroredAttachments = attachments;
+  let mirroredAtServer = false;
 
-  const gateMessage = await gateChannel.send(createGatePanel(asset));
+  if (fileStore?.enabled) {
+    const mirrored = await fileStore.mirrorAttachments(attachments, {
+      scopeKey: randomUUID(),
+    });
+    mirroredAttachments = mirrored.attachments;
+    mirroredAtServer = true;
+  }
+
+  let asset;
+  try {
+    asset = storage.createAsset({
+      guildId,
+      ownerUserId,
+      gateChannelId,
+      sourceType,
+      sourceChannelId,
+      sourceMessageId,
+      sourceUrl,
+      unlockMode: mode,
+      baseMode: mode,
+      passcodeEnabled,
+      passwordHash: passcodeEnabled ? hashPassword(passcode.trim(), passwordSalt) : null,
+      quotaPolicy,
+      statementEnabled,
+      statementText,
+      attachments: mirroredAttachments,
+    });
+  } catch (error) {
+    if (mirroredAtServer) {
+      await fileStore.deleteFilesForAttachments(mirroredAttachments).catch(() => {});
+    }
+    throw error;
+  }
+
+  let gateMessage;
+  try {
+    gateMessage = await gateChannel.send(createGatePanel(asset));
+  } catch (error) {
+    await deleteAssetWithFiles({
+      storage,
+      fileStore,
+      assetId: asset.id,
+    });
+    throw error;
+  }
+
   const bound = storage.bindGateMessage(asset.id, gateMessage.id);
 
   let sourceMessageDeleted = false;
@@ -537,6 +589,7 @@ async function handleSendProtected(interaction, deps) {
   const asset = await publishAssetPanel({
     client: deps.client,
     storage: deps.storage,
+    fileStore: deps.fileStore,
     guildId: interaction.guildId,
     gateChannel: interaction.channel,
     gateChannelId: interaction.channelId,
@@ -583,6 +636,7 @@ async function handleProtectMessage(interaction, deps) {
   const asset = await publishAssetPanel({
     client: deps.client,
     storage: deps.storage,
+    fileStore: deps.fileStore,
     guildId: interaction.guildId,
     gateChannel: interaction.channel,
     gateChannelId: interaction.channelId,
@@ -674,6 +728,7 @@ async function finalizePublishDraft(interaction, deps, draft) {
   const asset = await publishAssetPanel({
     client: deps.client,
     storage: deps.storage,
+    fileStore: deps.fileStore,
     guildId: draft.guildId,
     gateChannel,
     gateChannelId: draft.gateChannelId,
@@ -1009,7 +1064,11 @@ async function handleDeletePost(interaction, deps) {
   if (postDeleted) {
     const assets = deps.storage.listAssetsByGateChannel(channel.id);
     for (const asset of assets) {
-      const deleted = deps.storage.deleteAssetById(asset.id);
+      const deleted = await deleteAssetWithFiles({
+        storage: deps.storage,
+        fileStore: deps.fileStore,
+        assetId: asset.id,
+      });
       if (deleted) {
         deletedAssetIds.push(asset.id);
       }
@@ -1237,7 +1296,11 @@ async function handleButton(interaction, deps) {
     }
 
     await interaction.deferUpdate();
-    deps.storage.deleteAssetById(asset.id);
+    await deleteAssetWithFiles({
+      storage: deps.storage,
+      fileStore: deps.fileStore,
+      assetId: asset.id,
+    });
     await interaction.message.delete().catch(() => {});
     await interaction.followUp({
       content: "已移除本条发布处。",
@@ -1374,6 +1437,7 @@ async function handlePasscodeModal(interaction, deps) {
 export function createBot({
   token,
   storage,
+  fileStore = null,
   passwordSalt,
   dailyDownloadLimit,
   feedbackChannelId = "",
@@ -1392,6 +1456,7 @@ export function createBot({
   const deps = {
     client,
     storage,
+    fileStore,
     passwordSalt,
     dailyDownloadLimit,
     feedbackChannelId,
