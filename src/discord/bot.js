@@ -731,6 +731,31 @@ async function handleMessageContextCommand(interaction, deps) {
   return true;
 }
 
+async function handleProtectedAttachmentCommand(interaction, deps) {
+  const file = interaction.options.getAttachment("file", true);
+  const attachment = attachmentToRecord(file);
+
+  const draft = deps.draftStore.create({
+    ownerUserId: interaction.user.id,
+    guildId: interaction.guildId,
+    gateChannelId: interaction.channelId,
+    sourceType: "slash_attachment",
+    sourceChannelId: interaction.channelId,
+    sourceMessageId: null,
+    sourceUrl: null,
+    attachments: [attachment],
+    mode: "none",
+    passcodeEnabled: false,
+    passcode: "",
+    quotaPolicy: "open_share",
+    statementEnabled: false,
+    statementText: "",
+    modeOnly: true,
+  });
+
+  await interaction.reply(createPublishDraftPanel(draft, { ephemeral: true }));
+}
+
 async function finalizePublishDraft(interaction, deps, draft) {
   if (draft.passcodeEnabled && !draft.passcode.trim()) {
     await interaction.reply({
@@ -795,6 +820,18 @@ async function handlePublishDraftButton(interaction, deps, parsed) {
   }
 
   ensureDraftOwner(interaction, draft);
+  const modeOnly = Boolean(draft.modeOnly);
+
+  if (
+    modeOnly &&
+    !["set_mode", "publish", "cancel"].includes(parsed.action)
+  ) {
+    await interaction.reply({
+      content: "当前面板仅支持选择验证模式后直接发布。",
+      flags: MessageFlags.Ephemeral,
+    });
+    return true;
+  }
 
   if (parsed.action === "edit_passcode") {
     await interaction.showModal(createPasscodeModal(draft));
@@ -1204,6 +1241,11 @@ async function handleCommand(interaction, deps) {
 
     if (interaction.commandName === "newbie-verify") {
       await handleNewbieVerify(interaction, deps);
+      return;
+    }
+
+    if (interaction.commandName === "protected-attachment") {
+      await handleProtectedAttachmentCommand(interaction, deps);
       return;
     }
 

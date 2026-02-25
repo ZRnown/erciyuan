@@ -272,19 +272,25 @@ function importInfoText(draft) {
 }
 
 export function createPublishDraftPanel(draft, { ephemeral = false } = {}) {
-  const importDownloadRows = buildImportDownloadRows(draft);
+  const modeOnly = Boolean(draft.modeOnly);
+  const importDownloadRows = modeOnly ? [] : buildImportDownloadRows(draft);
 
   const container = new ContainerBuilder()
     .setAccentColor(0x4ea7ff)
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(overviewText(draft)))
-    .addActionRowComponents(modeButtons(draft))
-    .addTextDisplayComponents(new TextDisplayBuilder().setContent(passcodeText(draft)))
-    .addActionRowComponents(passcodeActionButtons(draft))
-    .addTextDisplayComponents(new TextDisplayBuilder().setContent(quotaText(draft)))
-    .addActionRowComponents(quotaButtons(draft))
-    .addTextDisplayComponents(new TextDisplayBuilder().setContent(statementText(draft)))
-    .addActionRowComponents(statementButtons(draft))
-    .addTextDisplayComponents(new TextDisplayBuilder().setContent(importInfoText(draft)));
+    .addActionRowComponents(modeButtons(draft));
+
+  if (!modeOnly) {
+    container
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(passcodeText(draft)))
+      .addActionRowComponents(passcodeActionButtons(draft))
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(quotaText(draft)))
+      .addActionRowComponents(quotaButtons(draft))
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(statementText(draft)))
+      .addActionRowComponents(statementButtons(draft));
+  }
+
+  container.addTextDisplayComponents(new TextDisplayBuilder().setContent(importInfoText(draft)));
 
   for (const row of importDownloadRows) {
     container.addActionRowComponents(row);

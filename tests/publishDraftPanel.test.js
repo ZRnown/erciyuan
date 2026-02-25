@@ -88,6 +88,56 @@ test("createPublishDraftPanel renders components-v2 card with passcode hint + va
   assert.equal(linkButtons[0].url, "https://cdn.discordapp.com/attachments/a/a.json");
 });
 
+test("createPublishDraftPanel mode-only draft hides passcode/quota/statement controls", () => {
+  const modeOnlyDraft = {
+    ...draft,
+    modeOnly: true,
+    passcodeEnabled: false,
+    passcode: "",
+    statementEnabled: false,
+    statementText: "",
+  };
+
+  const panel = createPublishDraftPanel(modeOnlyDraft, { ephemeral: true });
+  const container = panel.components[0].toJSON();
+
+  const textDisplays = container.components
+    .filter((component) => component.type === 10)
+    .map((component) => component.content);
+
+  assert.equal(textDisplays.some((content) => content.includes("### 提取码")), false);
+  assert.equal(textDisplays.some((content) => content.includes("### 获取次数设置")), false);
+  assert.equal(textDisplays.some((content) => content.includes("### 作者声明")), false);
+  assert.equal(textDisplays.some((content) => content.includes("### 作品已从消息导入")), true);
+
+  const actionRows = container.components.filter((component) => component.type === 1);
+  const buttonCustomIds = actionRows
+    .flatMap((row) => row.components)
+    .map((button) => button.custom_id)
+    .filter(Boolean);
+
+  assert.equal(
+    buttonCustomIds.includes(buildPublishDraftButtonId(modeOnlyDraft.id, "set_mode", "none")),
+    true,
+  );
+  assert.equal(
+    buttonCustomIds.includes(buildPublishDraftButtonId(modeOnlyDraft.id, "toggle_passcode")),
+    false,
+  );
+  assert.equal(
+    buttonCustomIds.includes(buildPublishDraftButtonId(modeOnlyDraft.id, "set_quota", "open_share")),
+    false,
+  );
+  assert.equal(
+    buttonCustomIds.includes(buildPublishDraftButtonId(modeOnlyDraft.id, "set_statement", "on")),
+    false,
+  );
+  assert.equal(
+    buttonCustomIds.includes(buildPublishDraftButtonId(modeOnlyDraft.id, "publish")),
+    true,
+  );
+});
+
 test("createPasscodeModal preserves existing passcode value", () => {
   const modal = createPasscodeModal(draft).toJSON();
   assert.equal(modal.custom_id, "publish_draft_modal:draft-1:passcode");

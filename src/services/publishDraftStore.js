@@ -42,6 +42,7 @@ export class PublishDraftStore {
       quotaPolicy: input.quotaPolicy ?? "open_share",
       statementEnabled: Boolean(input.statementEnabled),
       statementText: input.statementText ?? "",
+      modeOnly: Boolean(input.modeOnly),
       createdAt: now,
       updatedAt: now,
     };

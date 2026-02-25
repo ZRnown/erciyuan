@@ -52,9 +52,30 @@ export function buildCommands() {
     })
     .setDescription("发送新人入群答题验证面板");
 
+  const protectedAttachment = new SlashCommandBuilder()
+    .setName("protected-attachment")
+    .setNameLocalizations({
+      "zh-CN": "受保护的附件",
+    })
+    .setDescription("上传附件并打开简化作品发布面板")
+    .addAttachmentOption((option) =>
+      option
+        .setName("file")
+        .setDescription("要发布为受保护作品的附件")
+        .setRequired(true),
+    );
+
   const publishFromMessage = new ContextMenuCommandBuilder()
     .setName("发布此消息附件作为作品")
     .setType(ApplicationCommandType.Message);
 
-  return [claimByAssetId, deletePost, top, fetchAttachments, newbieVerify, publishFromMessage];
+  return [
+    claimByAssetId,
+    deletePost,
+    top,
+    fetchAttachments,
+    newbieVerify,
+    protectedAttachment,
+    publishFromMessage,
+  ];
 }
