@@ -35,6 +35,7 @@ const bot = createBot({
   traceChannelId: config.traceChannelId,
   newbieVerifiedRoleId: config.newbieVerifiedRoleId,
   newbieQuizQuestionsRaw: config.newbieQuizQuestionsRaw,
+  newbieVerifyPanelOwnerIds: config.newbieVerifyPanelOwnerIds,
 });
 
 bot

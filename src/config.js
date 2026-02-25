@@ -46,6 +46,7 @@ export const config = {
   traceChannelId: process.env.TRACE_CHANNEL_ID ?? "",
   newbieVerifiedRoleId: process.env.NEWBIE_VERIFIED_ROLE_ID ?? "",
   newbieQuizQuestionsRaw: process.env.NEWBIE_QUIZ_QUESTIONS ?? "",
+  newbieVerifyPanelOwnerIds: process.env.NEWBIE_VERIFY_PANEL_OWNER_IDS ?? "",
   fileBaseUrl: String(process.env.FILE_BASE_URL ?? "").trim(),
   fileStorageDir: process.env.FILE_STORAGE_DIR
     ? path.resolve(process.env.FILE_STORAGE_DIR)

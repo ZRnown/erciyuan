@@ -3,11 +3,13 @@ import assert from "node:assert/strict";
 import { MessageFlags } from "discord.js";
 
 import {
+  canUserOpenNewbieVerifyPanel,
   DEFAULT_NEWBIE_QUESTIONS,
   NewbieQuizService,
   buildNewbieQuizButtonId,
   createNewbieQuizEntryPanel,
   createNewbieQuizQuestionPanel,
+  parseNewbieVerifyPanelOwnerIds,
   parseNewbieQuizButtonId,
 } from "../src/discord/newbieQuiz.js";
 
@@ -120,4 +122,15 @@ test("NewbieQuizService handles pass/fail flow", () => {
 
 test("default newbie question list has five questions", () => {
   assert.equal(DEFAULT_NEWBIE_QUESTIONS.length, 5);
+});
+
+test("parse owner ids and permission check", () => {
+  const owners = parseNewbieVerifyPanelOwnerIds("10001, 20002  30003");
+  assert.equal(owners.has("10001"), true);
+  assert.equal(owners.has("20002"), true);
+  assert.equal(owners.has("30003"), true);
+
+  assert.equal(canUserOpenNewbieVerifyPanel(owners, "10001"), true);
+  assert.equal(canUserOpenNewbieVerifyPanel(owners, "99999"), false);
+  assert.equal(canUserOpenNewbieVerifyPanel(new Set(), "10001"), false);
 });

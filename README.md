@@ -41,7 +41,6 @@
   - Attach Files
   - Use Slash Commands
   - Send Messages in Threads
-  - 并在开发者后台启用 Server Members Intent（用于入群自动发送验证）
 
 ## 安装与启动
 
@@ -72,6 +71,7 @@ npm start
 - `FEEDBACK_CHANNEL_ID`：可选，填写后“获取作品”提示中的反馈频道将自动@该频道
 - `TRACE_CHANNEL_ID`：可选，填写后会把每次成功领取记录发送到该私密频道
 - `NEWBIE_VERIFIED_ROLE_ID`：可选，新人答题验证通过后自动发放的身份组 ID
+- `NEWBIE_VERIFY_PANEL_OWNER_IDS`：可选，可发布 `/newbie-verify` 面板的用户 ID（逗号/空格分隔）
 - `NEWBIE_QUIZ_QUESTIONS`：可选，新人验证题库 JSON（数组，含 `prompt/options/correct`）
 - `FILE_BASE_URL`：可选，填写后启用“附件转存到服务器并用自有链接下载”（例如 `https://files.example.com`）
 - `FILE_STORAGE_DIR`：可选，转存文件目录（默认 `./data/uploads`）
@@ -116,13 +116,10 @@ Apps -> 发布此消息附件作为作品
 /newbie-verify
 ```
 
-管理人员可发送“新人入群验证”面板。用户点击“开始答题验证”后，会在同一条私密交互中用 A/B/C/D 按钮连续答题，全部答对后自动发放身份组（若已配置 `NEWBIE_VERIFIED_ROLE_ID`）。
+指定用户可发送“新人入群验证”面板（通过 `NEWBIE_VERIFY_PANEL_OWNER_IDS` 配置）。用户点击“开始答题验证”后，会在同一条私密交互中用 A/B/C/D 按钮连续答题，全部答对后自动发放身份组（若已配置 `NEWBIE_VERIFIED_ROLE_ID`）。
+可通过 `NEWBIE_VERIFY_PANEL_OWNER_IDS` 限制为仅指定用户可使用该命令。
 
-### 5) 入群自动发送（无命令）
-
-用户加入服务器后，Bot 会自动私信发送“新人入群验证”面板。若用户关闭私信，则会发送失败并记录日志。
-
-### 6) 私密溯源（无命令）
+### 5) 私密溯源（无命令）
 
 配置 `TRACE_CHANNEL_ID` 后，用户每次成功获取附件，机器人会自动推送记录到该频道。
 

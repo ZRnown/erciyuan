@@ -28,31 +28,37 @@ function buildFrontCondition(policy) {
   return `${modeText} + 提取码`;
 }
 
-function buildAccessGuide(policy, quotaText) {
-  return [
-    `• 前置条件: **${buildFrontCondition(policy)}**`,
-    "",
-    "• 无限制: 可直接获取",
-    "",
-    "• 点赞: 对帖子首楼点赞(任意反应)",
-    "",
-    "• 点赞或评论: 对帖子首楼点赞(任意反应)或在贴内回复(任意回复)",
-    "",
-    "• 提取码: 寻找作者在贴内贴出的提取码",
-    "",
-    `• 分享模式: **${quotaText}**`,
-    "",
-    "• 每日限定: 用户的每日获取作品次数耗尽后无法获取本作品",
-    "",
-    "• 开放分享: 用户的每日获取作品次数耗尽后仍可获取本作品",
-  ].join("\n");
+function inferAssetName(asset) {
+  const firstAttachment = asset?.attachments?.[0]?.name;
+  if (!firstAttachment) {
+    return "未命名作品";
+  }
+
+  const trimmed = String(firstAttachment).trim();
+  if (!trimmed) {
+    return "未命名作品";
+  }
+
+  return trimmed;
 }
 
-function buildTipsText() {
-  return [
-    "点击“🎁 获取作品”后，机器人会把附件私信发送给你。",
-    "若私信失败，请检查是否开启了允许来自服务器成员的私信。",
-  ].join("\n");
+function buildAttachmentSummary(asset) {
+  const attachments = Array.isArray(asset?.attachments) ? asset.attachments : [];
+  if (attachments.length === 0) {
+    return "无附件";
+  }
+
+  const names = attachments
+    .slice(0, 3)
+    .map((item) => item?.name)
+    .filter(Boolean);
+
+  const summary = names.join("、") || "未知附件";
+  if (attachments.length <= 3) {
+    return `${summary}（共${attachments.length}个）`;
+  }
+
+  return `${summary} 等（共${attachments.length}个）`;
 }
 
 export function buildAssetCustomId(action, assetId) {
@@ -76,40 +82,20 @@ export function createGatePanel(asset) {
   const claimRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(buildAssetCustomId("download", asset.id))
-      .setLabel("🎁 获取作品")
-      .setStyle(ButtonStyle.Primary),
+      .setLabel("👍 验证并获取附件")
+      .setStyle(ButtonStyle.Success),
   );
 
   const container = new ContainerBuilder()
-    .setAccentColor(0x4ea7ff)
+    .setAccentColor(0x2ecc71)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
         [
-          "## 📍 作品发布处",
-          "请在此处交互获取本帖作品",
+          "## 💐作品获取处",
           "",
-          "或者直接发送 /输入作品id获取 来按作品ID领取",
-        ].join("\n"),
-      ),
-    )
-    .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        [
-          "### 获取作品需求",
-          "```md",
-          buildAccessGuide(policy, quotaText),
-          "```",
-        ].join("\n"),
-      ),
-    )
-    .addSeparatorComponents(new SeparatorBuilder())
-    .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        [
-          "### Tips:",
-          "```",
-          buildTipsText(),
-          "```",
+          `作品名：${inferAssetName(asset)}`,
+          `附件内容：${buildAttachmentSummary(asset)}`,
+          `获取条件：${buildFrontCondition(policy)}（${quotaText}）`,
         ].join("\n"),
       ),
     )

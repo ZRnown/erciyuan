@@ -27,6 +27,11 @@ test("createGatePanel builds components-v2 card with claim actions only", () => 
     quotaPolicy: "daily_limited",
     statementEnabled: false,
     statementText: null,
+    attachments: [
+      {
+        name: "果实V5.40预设-0201更新.zip",
+      },
+    ],
   });
 
   assert.equal(panel.flags, MessageFlags.IsComponentsV2);
@@ -37,9 +42,10 @@ test("createGatePanel builds components-v2 card with claim actions only", () => 
     .filter((component) => component.type === 10)
     .map((component) => component.content);
 
-  assert.equal(textDisplays.some((content) => content.includes("作品发布处")), true);
-  assert.equal(textDisplays.some((content) => content.includes("Tips")), true);
-  assert.equal(textDisplays.some((content) => content.includes("获取作品需求")), true);
+  assert.equal(textDisplays.some((content) => content.includes("💐作品获取处")), true);
+  assert.equal(textDisplays.some((content) => content.includes("作品名：")), true);
+  assert.equal(textDisplays.some((content) => content.includes("附件内容：")), true);
+  assert.equal(textDisplays.some((content) => content.includes("获取条件：")), true);
   assert.equal(textDisplays.some((content) => content.includes("作者专属交互")), false);
   assert.equal(textDisplays.some((content) => content.includes("> ")), false);
   assert.equal(textDisplays.some((content) => content.includes("│ ")), false);
@@ -48,8 +54,12 @@ test("createGatePanel builds components-v2 card with claim actions only", () => 
     .filter((component) => component.type === 1)
     .flatMap((row) => row.components);
   const customIds = allButtons.map((button) => button.custom_id).filter(Boolean);
+  const downloadButton = allButtons.find(
+    (button) => button.custom_id === buildAssetCustomId("download", "asset-1"),
+  );
 
   assert.equal(customIds.includes(buildAssetCustomId("download", "asset-1")), true);
+  assert.equal(downloadButton?.label, "👍 验证并获取附件");
   assert.equal(customIds.includes(buildAssetCustomId("passcode", "asset-1")), true);
   assert.equal(customIds.includes(buildAssetCustomId("remove_gate", "asset-1")), false);
   assert.equal(customIds.includes(buildAssetCustomId("replace_gate", "asset-1")), false);

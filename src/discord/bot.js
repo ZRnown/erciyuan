@@ -53,8 +53,10 @@ import {
   parseAssetClaimButtonId,
 } from "./assetClaimPanel.js";
 import {
+  canUserOpenNewbieVerifyPanel,
   NewbieQuizService,
   createNewbieQuizEntryPanel,
+  parseNewbieVerifyPanelOwnerIds,
   createNewbieQuizQuestionPanel,
   parseNewbieQuizButtonId,
   resolveNewbieQuizQuestions,
@@ -1146,8 +1148,8 @@ async function handleFetchAttachments(interaction, deps) {
 }
 
 async function handleNewbieVerify(interaction, deps) {
-  if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
-    throw new Error("只有管理人员可以发送新人验证面板。");
+  if (!canUserOpenNewbieVerifyPanel(deps.newbieVerifyPanelOwnerIds, interaction.user.id)) {
+    throw new Error("你没有权限使用该命令。");
   }
 
   await interaction.reply(
@@ -1661,11 +1663,11 @@ export function createBot({
   traceChannelId = "",
   newbieVerifiedRoleId = "",
   newbieQuizQuestionsRaw = "",
+  newbieVerifyPanelOwnerIds = "",
 }) {
   const client = new Client({
     intents: [
       GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMembers,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.GuildMessageReactions,
       GatewayIntentBits.DirectMessages,
@@ -1682,6 +1684,7 @@ export function createBot({
     feedbackChannelId,
     traceChannelId,
     newbieVerifiedRoleId,
+    newbieVerifyPanelOwnerIds: parseNewbieVerifyPanelOwnerIds(newbieVerifyPanelOwnerIds),
     draftStore: new PublishDraftStore(),
     newbieQuiz: new NewbieQuizService({
       questions: resolveNewbieQuizQuestions(newbieQuizQuestionsRaw),
@@ -1821,23 +1824,6 @@ export function createBot({
       } catch (error) {
         console.error(`Comment unlock error for gate ${asset.gateMessageId}:`, error);
       }
-    }
-  });
-
-  client.on(Events.GuildMemberAdd, async (member) => {
-    if (!member || member.user?.bot) {
-      return;
-    }
-
-    try {
-      await member.send(
-        createNewbieQuizEntryPanel({
-          questionCount: deps.newbieQuiz.questions.length,
-          includeFlags: false,
-        }),
-      );
-    } catch (error) {
-      console.error(`Failed to send newbie verify panel to user ${member.id}:`, error);
     }
   });
 

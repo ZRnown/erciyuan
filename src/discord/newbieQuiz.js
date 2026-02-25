@@ -57,6 +57,28 @@ export const DEFAULT_NEWBIE_QUESTIONS = [
   },
 ];
 
+export function parseNewbieVerifyPanelOwnerIds(rawValue) {
+  const raw = String(rawValue ?? "").trim();
+  if (!raw) {
+    return new Set();
+  }
+
+  const values = raw
+    .split(/[\s,]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return new Set(values);
+}
+
+export function canUserOpenNewbieVerifyPanel(ownerIds, userId) {
+  if (!(ownerIds instanceof Set) || ownerIds.size === 0) {
+    return false;
+  }
+
+  return ownerIds.has(String(userId));
+}
+
 function normalizeQuestion(input) {
   const prompt = String(input?.prompt ?? "").trim();
   const options = input?.options ?? {};
