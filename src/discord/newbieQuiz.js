@@ -215,20 +215,27 @@ export function createNewbieQuizQuestionPanel({
   total,
   includeFlags = true,
 }) {
-  const payload = {
-    content: [
-      `**新人验证答题 (${index + 1}/${total})**`,
-      "",
-      question.prompt,
-      "",
-      `A. ${question.options.A}`,
-      `B. ${question.options.B}`,
-      `C. ${question.options.C}`,
-      `D. ${question.options.D}`,
-      "",
-      "请选择一个选项继续作答。",
-    ].join("\n"),
-    components: [
+  const container = new ContainerBuilder()
+    .setAccentColor(0x4ea7ff)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        [
+          `## 新人验证答题 (${index + 1}/${total})`,
+          `答题进度：${index + 1}/${total}`,
+          "",
+          question.prompt,
+          "",
+          `A. ${question.options.A}`,
+          `B. ${question.options.B}`,
+          `C. ${question.options.C}`,
+          `D. ${question.options.D}`,
+          "",
+          "请选择一个选项继续作答。",
+        ].join("\n"),
+      ),
+    )
+    .addSeparatorComponents(new SeparatorBuilder())
+    .addActionRowComponents(
       new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(buildNewbieQuizButtonId("answer", sessionId, "A"))
@@ -238,8 +245,6 @@ export function createNewbieQuizQuestionPanel({
           .setCustomId(buildNewbieQuizButtonId("answer", sessionId, "B"))
           .setLabel("B")
           .setStyle(ButtonStyle.Primary),
-      ),
-      new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(buildNewbieQuizButtonId("answer", sessionId, "C"))
           .setLabel("C")
@@ -249,11 +254,16 @@ export function createNewbieQuizQuestionPanel({
           .setLabel("D")
           .setStyle(ButtonStyle.Primary),
       ),
-    ],
+    );
+
+  const payload = {
+    components: [container],
   };
 
   if (includeFlags) {
-    payload.flags = MessageFlags.Ephemeral;
+    payload.flags = MessageFlags.Ephemeral | MessageFlags.IsComponentsV2;
+  } else {
+    payload.flags = MessageFlags.IsComponentsV2;
   }
 
   return payload;

@@ -87,12 +87,24 @@ test("createNewbieQuizQuestionPanel shows current question and answer buttons", 
     includeFlags: true,
   });
 
-  assert.equal(panel.flags, MessageFlags.Ephemeral);
-  assert.equal(panel.components.length, 2);
-  const firstRow = panel.components[0].toJSON();
-  assert.equal(firstRow.components.length, 2);
-  assert.equal(firstRow.components[0].custom_id, "newbie_quiz:answer:s1:A");
-  assert.equal(firstRow.components[1].custom_id, "newbie_quiz:answer:s1:B");
+  assert.equal(panel.flags, MessageFlags.Ephemeral | MessageFlags.IsComponentsV2);
+  assert.equal(panel.components.length, 1);
+
+  const container = panel.components[0].toJSON();
+  const textDisplays = container.components
+    .filter((component) => component.type === 10)
+    .map((component) => component.content);
+
+  assert.equal(textDisplays.some((content) => content.includes("答题进度：1/2")), true);
+  assert.equal(textDisplays.some((content) => content.includes("官方群规则里，遇到问题第一步应该做什么？")), true);
+
+  const rows = container.components.filter((component) => component.type === 1);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].components.length, 4);
+  assert.equal(rows[0].components[0].custom_id, "newbie_quiz:answer:s1:A");
+  assert.equal(rows[0].components[1].custom_id, "newbie_quiz:answer:s1:B");
+  assert.equal(rows[0].components[2].custom_id, "newbie_quiz:answer:s1:C");
+  assert.equal(rows[0].components[3].custom_id, "newbie_quiz:answer:s1:D");
 });
 
 test("NewbieQuizService handles pass/fail flow", () => {
