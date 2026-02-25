@@ -269,6 +269,37 @@ export function createNewbieQuizQuestionPanel({
   return payload;
 }
 
+export function createNewbieQuizResultPanel({
+  title,
+  message,
+  includeFlags = false,
+}) {
+  const container = new ContainerBuilder()
+    .setAccentColor(0x2ecc71)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        [
+          `## ${title}`,
+          String(message ?? "").trim(),
+        ]
+          .filter(Boolean)
+          .join("\n\n"),
+      ),
+    );
+
+  const payload = {
+    components: [container],
+  };
+
+  if (includeFlags) {
+    payload.flags = MessageFlags.Ephemeral | MessageFlags.IsComponentsV2;
+  } else {
+    payload.flags = MessageFlags.IsComponentsV2;
+  }
+
+  return payload;
+}
+
 export class NewbieQuizService {
   constructor({ questions = DEFAULT_NEWBIE_QUESTIONS } = {}) {
     this.questions = questions.map(normalizeQuestion).filter(Boolean);

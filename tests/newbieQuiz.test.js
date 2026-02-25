@@ -9,6 +9,7 @@ import {
   buildNewbieQuizButtonId,
   createNewbieQuizEntryPanel,
   createNewbieQuizQuestionPanel,
+  createNewbieQuizResultPanel,
   parseNewbieVerifyPanelOwnerIds,
   parseNewbieQuizButtonId,
 } from "../src/discord/newbieQuiz.js";
@@ -141,6 +142,23 @@ test("NewbieQuizService handles pass/fail flow", () => {
 
 test("default newbie question list has five questions", () => {
   assert.equal(DEFAULT_NEWBIE_QUESTIONS.length, 5);
+});
+
+test("createNewbieQuizResultPanel renders components-v2 result card", () => {
+  const payload = createNewbieQuizResultPanel({
+    title: "验证通过",
+    message: "已发放身份组",
+    includeFlags: false,
+  });
+
+  assert.equal(payload.flags, MessageFlags.IsComponentsV2);
+  assert.equal(payload.components.length, 1);
+  const container = payload.components[0].toJSON();
+  const textDisplays = container.components
+    .filter((component) => component.type === 10)
+    .map((component) => component.content);
+  assert.equal(textDisplays.some((content) => content.includes("验证通过")), true);
+  assert.equal(textDisplays.some((content) => content.includes("已发放身份组")), true);
 });
 
 test("parse owner ids and permission check", () => {

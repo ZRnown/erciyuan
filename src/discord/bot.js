@@ -58,6 +58,7 @@ import {
   createNewbieQuizEntryPanel,
   parseNewbieVerifyPanelOwnerIds,
   createNewbieQuizQuestionPanel,
+  createNewbieQuizResultPanel,
   parseNewbieQuizButtonId,
   resolveNewbieQuizQuestions,
 } from "./newbieQuiz.js";
@@ -1390,10 +1391,12 @@ async function handleButton(interaction, deps) {
       }
 
       if (result.status === "failed") {
-        await interaction.update({
-          content: `回答错误，本次验证未通过（正确选项：${result.correctOption}）。请回到验证面板重新开始。`,
-          components: [],
-        });
+        await interaction.update(
+          createNewbieQuizResultPanel({
+            title: "验证未通过",
+            message: `回答错误（正确选项：${result.correctOption}）。请回到验证面板重新开始。`,
+          }),
+        );
         return;
       }
 
@@ -1415,10 +1418,12 @@ async function handleButton(interaction, deps) {
           roleMessage = "验证通过。当前未配置自动发放身份组。";
         }
 
-        await interaction.update({
-          content: roleMessage,
-          components: [],
-        });
+        await interaction.update(
+          createNewbieQuizResultPanel({
+            title: "验证通过",
+            message: roleMessage,
+          }),
+        );
         return;
       }
 
