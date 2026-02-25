@@ -55,10 +55,17 @@ test("createNewbieQuizEntryPanel builds public start button payload", () => {
     questionCount: 5,
   });
 
-  assert.equal(panel.flags, MessageFlags.SuppressNotifications);
+  assert.equal(panel.flags, MessageFlags.SuppressNotifications | MessageFlags.IsComponentsV2);
   assert.equal(panel.components.length, 1);
-  const row = panel.components[0].toJSON();
-  assert.equal(row.components[0].custom_id, "newbie_quiz:start");
+  const container = panel.components[0].toJSON();
+  const textDisplays = container.components
+    .filter((component) => component.type === 10)
+    .map((component) => component.content);
+  assert.equal(textDisplays.some((content) => content.includes("新人入群验证")), true);
+
+  const rows = container.components.filter((component) => component.type === 1);
+  assert.equal(rows.length >= 1, true);
+  assert.equal(rows[rows.length - 1].components[0].custom_id, "newbie_quiz:start");
 });
 
 test("createNewbieQuizEntryPanel can omit message flags for DM usage", () => {
@@ -67,7 +74,7 @@ test("createNewbieQuizEntryPanel can omit message flags for DM usage", () => {
     includeFlags: false,
   });
 
-  assert.equal(panel.flags, undefined);
+  assert.equal(panel.flags, MessageFlags.IsComponentsV2);
   assert.equal(panel.components.length, 1);
 });
 

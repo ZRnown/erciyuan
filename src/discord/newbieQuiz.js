@@ -1,5 +1,13 @@
 import { randomUUID } from "node:crypto";
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ContainerBuilder,
+  MessageFlags,
+  SeparatorBuilder,
+  TextDisplayBuilder,
+} from "discord.js";
 
 const NEWBIE_QUIZ_PREFIX = "newbie_quiz";
 const QUIZ_OPTION_ORDER = ["A", "B", "C", "D"];
@@ -162,29 +170,39 @@ export function parseNewbieQuizButtonId(customId) {
 }
 
 export function createNewbieQuizEntryPanel({ questionCount, includeFlags = true } = {}) {
-  const payload = {
-    content: [
-      "📝 **新人入群验证**",
-      "",
-      "欢迎来到本群，请先完成答题验证。",
-      "",
-      "答题说明：",
-      `- 题目数量：${questionCount} 题`,
-      `- 及格标准：${questionCount}/${questionCount}`,
-      "- 完成后自动发放验证身份组",
-    ].join("\n"),
-    components: [
+  const container = new ContainerBuilder()
+    .setAccentColor(0x2ecc71)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        [
+          "## 📝 新人入群验证",
+          "欢迎来到本群，请先完成答题验证。",
+          "",
+          "答题说明：",
+          `- 题目数量：${questionCount} 题`,
+          `- 及格标准：${questionCount}/${questionCount}`,
+          "- 完成后自动发放验证身份组",
+        ].join("\n"),
+      ),
+    )
+    .addSeparatorComponents(new SeparatorBuilder())
+    .addActionRowComponents(
       new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(buildNewbieQuizButtonId("start"))
           .setLabel("📝 开始答题验证")
           .setStyle(ButtonStyle.Success),
       ),
-    ],
+    );
+
+  const payload = {
+    components: [container],
   };
 
   if (includeFlags) {
-    payload.flags = MessageFlags.SuppressNotifications;
+    payload.flags = MessageFlags.SuppressNotifications | MessageFlags.IsComponentsV2;
+  } else {
+    payload.flags = MessageFlags.IsComponentsV2;
   }
 
   return payload;
