@@ -47,6 +47,18 @@ import {
 } from "./publishDraftPanel.js";
 import { createDeliveryDmPanel } from "./deliveryDm.js";
 import { createClaimSuccessPanel } from "./downloadSuccessPanel.js";
+import {
+  CLAIM_PICKER_SELECT_ID,
+  createAssetClaimPanel,
+  parseAssetClaimButtonId,
+} from "./assetClaimPanel.js";
+import {
+  NewbieQuizService,
+  createNewbieQuizEntryPanel,
+  createNewbieQuizQuestionPanel,
+  parseNewbieQuizButtonId,
+  resolveNewbieQuizQuestions,
+} from "./newbieQuiz.js";
 
 const MESSAGE_CONTEXT_PUBLISH_NAME = "发布此消息附件作为作品";
 const PASSCODE_MODAL_PREFIX = "protected_passcode_modal";
@@ -215,6 +227,11 @@ function buildAssetPostLink(asset) {
   }
 
   return "未知链接";
+}
+
+function listRecentAssetsForChannel(storage, channelId, limit = 25) {
+  const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(25, Math.trunc(limit))) : 25;
+  return storage.listAssetsByGateChannel(channelId).slice(0, safeLimit);
 }
 
 async function sendTraceMessage({ client, traceChannelId, asset, userId, deliveredAt }) {
@@ -1110,6 +1127,36 @@ async function handleTop(interaction) {
   await interaction.reply(createTopJumpMessage(link));
 }
 
+async function handleFetchAttachments(interaction, deps) {
+  const channel = interaction.channel;
+  if (!channel || !channel.isTextBased()) {
+    throw new Error("当前频道不支持附件获取列表。");
+  }
+
+  const assets = listRecentAssetsForChannel(deps.storage, interaction.channelId, 25);
+  if (assets.length === 0) {
+    await interaction.reply({
+      content: "📂 当前频道暂无可获取附件。请先发布作品后再试。",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  await interaction.reply(createAssetClaimPanel({ assets }));
+}
+
+async function handleNewbieVerify(interaction, deps) {
+  if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
+    throw new Error("只有管理人员可以发送新人验证面板。");
+  }
+
+  await interaction.reply(
+    createNewbieQuizEntryPanel({
+      questionCount: deps.newbieQuiz.questions.length,
+    }),
+  );
+}
+
 async function handleCommand(interaction, deps) {
   try {
     if (interaction.commandName === "send-protected") {
@@ -1144,6 +1191,16 @@ async function handleCommand(interaction, deps) {
 
     if (interaction.commandName === "top") {
       await handleTop(interaction);
+      return;
+    }
+
+    if (interaction.commandName === "fetch-attachments") {
+      await handleFetchAttachments(interaction, deps);
+      return;
+    }
+
+    if (interaction.commandName === "newbie-verify") {
+      await handleNewbieVerify(interaction, deps);
       return;
     }
 
@@ -1255,7 +1312,155 @@ async function handleConfirmStatement(interaction, deps, asset) {
   });
 }
 
+async function handleAssetClaimSelect(interaction, deps) {
+  if (interaction.customId !== CLAIM_PICKER_SELECT_ID) {
+    return false;
+  }
+
+  const assets = listRecentAssetsForChannel(deps.storage, interaction.channelId, 25);
+  if (assets.length === 0) {
+    await interaction.update({
+      content: "📂 当前频道暂无可获取附件。请重新执行 /获取附件。",
+      components: [],
+    });
+    return true;
+  }
+
+  const selectedAssetId = interaction.values?.[0] ?? "";
+  await interaction.update(
+    createAssetClaimPanel({
+      assets,
+      selectedAssetId,
+      includeFlags: false,
+    }),
+  );
+  return true;
+}
+
 async function handleButton(interaction, deps) {
+  const newbieAction = parseNewbieQuizButtonId(interaction.customId);
+  if (newbieAction) {
+    if (newbieAction.action === "start") {
+      const session = deps.newbieQuiz.startSession(interaction.user.id);
+      const firstQuestion = deps.newbieQuiz.questions[0];
+
+      await interaction.reply(
+        createNewbieQuizQuestionPanel({
+          question: firstQuestion,
+          sessionId: session.id,
+          index: 0,
+          total: deps.newbieQuiz.questions.length,
+          includeFlags: true,
+        }),
+      );
+      return;
+    }
+
+    if (newbieAction.action === "answer") {
+      const result = deps.newbieQuiz.answer({
+        sessionId: newbieAction.sessionId,
+        userId: interaction.user.id,
+        option: newbieAction.option,
+      });
+
+      if (result.status === "expired") {
+        await interaction.reply({
+          content: "答题会话已过期，请点击“开始答题验证”重新开始。",
+          flags: MessageFlags.Ephemeral,
+        });
+        return;
+      }
+
+      if (result.status === "forbidden") {
+        await interaction.reply({
+          content: "该答题会话不属于你，请自行点击“开始答题验证”。",
+          flags: MessageFlags.Ephemeral,
+        });
+        return;
+      }
+
+      if (result.status === "failed") {
+        await interaction.update({
+          content: `回答错误，本次验证未通过（正确选项：${result.correctOption}）。请回到验证面板重新开始。`,
+          components: [],
+        });
+        return;
+      }
+
+      if (result.status === "passed") {
+        let roleMessage = "验证通过。";
+        const roleId = String(deps.newbieVerifiedRoleId ?? "").trim();
+
+        if (interaction.guild && roleId) {
+          const member = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
+          if (member) {
+            const added = await member.roles.add(roleId).then(() => true).catch(() => false);
+            roleMessage = added
+              ? `验证通过，已发放身份组：<@&${roleId}>`
+              : "验证通过，但身份组发放失败，请联系管理员手动处理。";
+          } else {
+            roleMessage = "验证通过，但无法找到你的成员信息，身份组发放失败。";
+          }
+        } else if (!roleId) {
+          roleMessage = "验证通过。当前未配置自动发放身份组。";
+        }
+
+        await interaction.update({
+          content: roleMessage,
+          components: [],
+        });
+        return;
+      }
+
+      if (result.status === "next") {
+        await interaction.update(
+          createNewbieQuizQuestionPanel({
+            question: result.nextQuestion,
+            sessionId: newbieAction.sessionId,
+            index: result.index,
+            total: deps.newbieQuiz.questions.length,
+            includeFlags: false,
+          }),
+        );
+        return;
+      }
+
+      await interaction.reply({
+        content: "无效答题选项，请重新开始验证。",
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+  }
+
+  const pickerAction = parseAssetClaimButtonId(interaction.customId);
+  if (pickerAction) {
+    if (pickerAction.action !== "claim") {
+      return;
+    }
+
+    const assetId = String(pickerAction.assetId ?? "").trim();
+    if (!assetId) {
+      await interaction.reply({
+        content: "请先从下拉菜单里选择要获取的附件。",
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    const asset = deps.storage.getAssetById(assetId);
+    if (!asset || asset.gateChannelId !== interaction.channelId) {
+      await interaction.reply({
+        content: "该附件包已失效或不在当前频道，请重新执行 /获取附件。",
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    await handleDownloadButton(interaction, deps, asset);
+    return;
+  }
+
   const draftAction = parsePublishDraftButtonId(interaction.customId);
   if (draftAction) {
     await handlePublishDraftButton(interaction, deps, draftAction);
@@ -1434,6 +1639,10 @@ async function handlePasscodeModal(interaction, deps) {
   });
 }
 
+async function handleSelectMenu(interaction, deps) {
+  return handleAssetClaimSelect(interaction, deps);
+}
+
 export function createBot({
   token,
   storage,
@@ -1442,6 +1651,8 @@ export function createBot({
   dailyDownloadLimit,
   feedbackChannelId = "",
   traceChannelId = "",
+  newbieVerifiedRoleId = "",
+  newbieQuizQuestionsRaw = "",
 }) {
   const client = new Client({
     intents: [
@@ -1461,7 +1672,11 @@ export function createBot({
     dailyDownloadLimit,
     feedbackChannelId,
     traceChannelId,
+    newbieVerifiedRoleId,
     draftStore: new PublishDraftStore(),
+    newbieQuiz: new NewbieQuizService({
+      questions: resolveNewbieQuizQuestions(newbieQuizQuestionsRaw),
+    }),
   };
 
   client.once(Events.ClientReady, (readyClient) => {
@@ -1478,6 +1693,13 @@ export function createBot({
       if (interaction.isMessageContextMenuCommand()) {
         await handleMessageContextCommand(interaction, deps);
         return;
+      }
+
+      if (interaction.isStringSelectMenu()) {
+        const handled = await handleSelectMenu(interaction, deps);
+        if (handled) {
+          return;
+        }
       }
 
       if (interaction.isButton()) {

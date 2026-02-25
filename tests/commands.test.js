@@ -6,13 +6,13 @@ import { buildCommands } from "../src/discord/commands.js";
 test("buildCommands keeps only required slash commands + publish context command", () => {
   const commands = buildCommands();
 
-  assert.equal(commands.length, 4);
+  assert.equal(commands.length, 6);
   const payloads = commands.map((command) => command.toJSON());
 
   const slashCount = payloads.filter((item) => !item.type || item.type === 1).length;
   const contextCount = payloads.filter((item) => item.type === 3).length;
 
-  assert.equal(slashCount, 3);
+  assert.equal(slashCount, 5);
   assert.equal(contextCount, 1);
   assert.equal(
     payloads.some((item) => item.name === "发布此消息附件作为作品" && item.type === 3),
@@ -23,7 +23,7 @@ test("buildCommands keeps only required slash commands + publish context command
     .filter((item) => !item.type || item.type === 1)
     .map((item) => item.name)
     .sort();
-  assert.deepEqual(slashNames, ["claim-by-id", "delete-post", "top"]);
+  assert.deepEqual(slashNames, ["claim-by-id", "delete-post", "fetch-attachments", "newbie-verify", "top"]);
 
   const claimById = payloads.find((item) => item.name === "claim-by-id");
   assert.ok(claimById);
@@ -38,4 +38,12 @@ test("buildCommands keeps only required slash commands + publish context command
   const top = payloads.find((item) => item.name === "top");
   assert.ok(top);
   assert.equal(top.name_localizations["zh-CN"], "回顶");
+
+  const fetchAttachments = payloads.find((item) => item.name === "fetch-attachments");
+  assert.ok(fetchAttachments);
+  assert.equal(fetchAttachments.name_localizations["zh-CN"], "获取附件");
+
+  const newbieVerify = payloads.find((item) => item.name === "newbie-verify");
+  assert.ok(newbieVerify);
+  assert.equal(newbieVerify.name_localizations["zh-CN"], "新人验证");
 });

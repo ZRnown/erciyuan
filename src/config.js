@@ -44,6 +44,8 @@ export const config = {
   dailyDownloadLimit: parsePositiveInt(process.env.DAILY_DOWNLOAD_LIMIT ?? 10, 10),
   feedbackChannelId: process.env.FEEDBACK_CHANNEL_ID ?? "",
   traceChannelId: process.env.TRACE_CHANNEL_ID ?? "",
+  newbieVerifiedRoleId: process.env.NEWBIE_VERIFIED_ROLE_ID ?? "",
+  newbieQuizQuestionsRaw: process.env.NEWBIE_QUIZ_QUESTIONS ?? "",
   fileBaseUrl: String(process.env.FILE_BASE_URL ?? "").trim(),
   fileStorageDir: process.env.FILE_STORAGE_DIR
     ? path.resolve(process.env.FILE_STORAGE_DIR)

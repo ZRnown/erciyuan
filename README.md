@@ -70,6 +70,8 @@ npm start
 - `DAILY_DOWNLOAD_LIMIT`：每日下载额度上限（默认 10）
 - `FEEDBACK_CHANNEL_ID`：可选，填写后“获取作品”提示中的反馈频道将自动@该频道
 - `TRACE_CHANNEL_ID`：可选，填写后会把每次成功领取记录发送到该私密频道
+- `NEWBIE_VERIFIED_ROLE_ID`：可选，新人答题验证通过后自动发放的身份组 ID
+- `NEWBIE_QUIZ_QUESTIONS`：可选，新人验证题库 JSON（数组，含 `prompt/options/correct`）
 - `FILE_BASE_URL`：可选，填写后启用“附件转存到服务器并用自有链接下载”（例如 `https://files.example.com`）
 - `FILE_STORAGE_DIR`：可选，转存文件目录（默认 `./data/uploads`）
 - `FILE_SERVER_HOST`：可选，内置下载服务监听地址（默认 `0.0.0.0`）
@@ -107,7 +109,15 @@ Apps -> 发布此消息附件作为作品
 
 返回一个可点击的“回到首楼”按钮（不再输出纯文本链接）。
 
-### 4) 私密溯源（无命令）
+### 4) 新人验证面板
+
+```text
+/newbie-verify
+```
+
+管理人员可发送“新人入群验证”面板。用户点击“开始答题验证”后，会在同一条私密交互中用 A/B/C/D 按钮连续答题，全部答对后自动发放身份组（若已配置 `NEWBIE_VERIFIED_ROLE_ID`）。
+
+### 5) 私密溯源（无命令）
 
 配置 `TRACE_CHANNEL_ID` 后，用户每次成功获取附件，机器人会自动推送记录到该频道。
 

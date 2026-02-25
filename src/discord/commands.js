@@ -38,9 +38,23 @@ export function buildCommands() {
     })
     .setDescription("回到帖子首楼");
 
+  const fetchAttachments = new SlashCommandBuilder()
+    .setName("fetch-attachments")
+    .setNameLocalizations({
+      "zh-CN": "获取附件",
+    })
+    .setDescription("打开当前频道的附件获取列表");
+
+  const newbieVerify = new SlashCommandBuilder()
+    .setName("newbie-verify")
+    .setNameLocalizations({
+      "zh-CN": "新人验证",
+    })
+    .setDescription("发送新人入群答题验证面板");
+
   const publishFromMessage = new ContextMenuCommandBuilder()
     .setName("发布此消息附件作为作品")
     .setType(ApplicationCommandType.Message);
 
-  return [claimByAssetId, deletePost, top, publishFromMessage];
+  return [claimByAssetId, deletePost, top, fetchAttachments, newbieVerify, publishFromMessage];
 }

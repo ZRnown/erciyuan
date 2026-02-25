@@ -33,6 +33,8 @@ const bot = createBot({
   dailyDownloadLimit: config.dailyDownloadLimit,
   feedbackChannelId: config.feedbackChannelId,
   traceChannelId: config.traceChannelId,
+  newbieVerifiedRoleId: config.newbieVerifiedRoleId,
+  newbieQuizQuestionsRaw: config.newbieQuizQuestionsRaw,
 });
 
 bot
