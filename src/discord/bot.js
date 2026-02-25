@@ -1338,6 +1338,8 @@ async function handleAssetClaimSelect(interaction, deps) {
 }
 
 async function handleButton(interaction, deps) {
+  const privateFlags = interaction.inGuild() ? MessageFlags.Ephemeral : undefined;
+
   const newbieAction = parseNewbieQuizButtonId(interaction.customId);
   if (newbieAction) {
     if (newbieAction.action === "start") {
@@ -1350,7 +1352,7 @@ async function handleButton(interaction, deps) {
           sessionId: session.id,
           index: 0,
           total: deps.newbieQuiz.questions.length,
-          includeFlags: true,
+          includeFlags: interaction.inGuild(),
         }),
       );
       return;
@@ -1364,18 +1366,24 @@ async function handleButton(interaction, deps) {
       });
 
       if (result.status === "expired") {
-        await interaction.reply({
+        const payload = {
           content: "答题会话已过期，请点击“开始答题验证”重新开始。",
-          flags: MessageFlags.Ephemeral,
-        });
+        };
+        if (privateFlags) {
+          payload.flags = privateFlags;
+        }
+        await interaction.reply(payload);
         return;
       }
 
       if (result.status === "forbidden") {
-        await interaction.reply({
+        const payload = {
           content: "该答题会话不属于你，请自行点击“开始答题验证”。",
-          flags: MessageFlags.Ephemeral,
-        });
+        };
+        if (privateFlags) {
+          payload.flags = privateFlags;
+        }
+        await interaction.reply(payload);
         return;
       }
 
@@ -1427,7 +1435,7 @@ async function handleButton(interaction, deps) {
 
       await interaction.reply({
         content: "无效答题选项，请重新开始验证。",
-        flags: MessageFlags.Ephemeral,
+        ...(privateFlags ? { flags: privateFlags } : {}),
       });
       return;
     }
@@ -1657,6 +1665,7 @@ export function createBot({
   const client = new Client({
     intents: [
       GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMembers,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.GuildMessageReactions,
       GatewayIntentBits.DirectMessages,
@@ -1812,6 +1821,23 @@ export function createBot({
       } catch (error) {
         console.error(`Comment unlock error for gate ${asset.gateMessageId}:`, error);
       }
+    }
+  });
+
+  client.on(Events.GuildMemberAdd, async (member) => {
+    if (!member || member.user?.bot) {
+      return;
+    }
+
+    try {
+      await member.send(
+        createNewbieQuizEntryPanel({
+          questionCount: deps.newbieQuiz.questions.length,
+          includeFlags: false,
+        }),
+      );
+    } catch (error) {
+      console.error(`Failed to send newbie verify panel to user ${member.id}:`, error);
     }
   });
 

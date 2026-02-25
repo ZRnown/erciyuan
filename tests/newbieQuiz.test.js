@@ -59,6 +59,16 @@ test("createNewbieQuizEntryPanel builds public start button payload", () => {
   assert.equal(row.components[0].custom_id, "newbie_quiz:start");
 });
 
+test("createNewbieQuizEntryPanel can omit message flags for DM usage", () => {
+  const panel = createNewbieQuizEntryPanel({
+    questionCount: 5,
+    includeFlags: false,
+  });
+
+  assert.equal(panel.flags, undefined);
+  assert.equal(panel.components.length, 1);
+});
+
 test("createNewbieQuizQuestionPanel shows current question and answer buttons", () => {
   const panel = createNewbieQuizQuestionPanel({
     question: QUESTIONS[0],

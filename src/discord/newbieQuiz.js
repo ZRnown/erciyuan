@@ -139,8 +139,8 @@ export function parseNewbieQuizButtonId(customId) {
   return null;
 }
 
-export function createNewbieQuizEntryPanel({ questionCount }) {
-  return {
+export function createNewbieQuizEntryPanel({ questionCount, includeFlags = true } = {}) {
+  const payload = {
     content: [
       "📝 **新人入群验证**",
       "",
@@ -159,8 +159,13 @@ export function createNewbieQuizEntryPanel({ questionCount }) {
           .setStyle(ButtonStyle.Success),
       ),
     ],
-    flags: MessageFlags.SuppressNotifications,
   };
+
+  if (includeFlags) {
+    payload.flags = MessageFlags.SuppressNotifications;
+  }
+
+  return payload;
 }
 
 export function createNewbieQuizQuestionPanel({
