@@ -62,7 +62,8 @@ test("createNewbieQuizEntryPanel builds public start button payload", () => {
   const textDisplays = container.components
     .filter((component) => component.type === 10)
     .map((component) => component.content);
-  assert.equal(textDisplays.some((content) => content.includes("新人入群验证")), true);
+  assert.equal(textDisplays.some((content) => content.includes("繁花Sylvie基础问卷")), true);
+  assert.equal(textDisplays.some((content) => content.includes("欢迎来到繁花Sylvie")), true);
 
   const rows = container.components.filter((component) => component.type === 1);
   assert.equal(rows.length >= 1, true);
@@ -109,15 +110,22 @@ test("createNewbieQuizQuestionPanel shows current question and answer buttons", 
 });
 
 test("NewbieQuizService handles pass/fail flow", () => {
-  const service = new NewbieQuizService({ questions: QUESTIONS });
+  const service = new NewbieQuizService({
+    questions: QUESTIONS,
+    questionCount: 2,
+    rng: () => 0,
+  });
 
   const session = service.startSession("u1");
   assert.equal(session.index, 0);
+  assert.equal(session.total, 2);
+  assert.equal(session.questions.length, 2);
 
+  const wrongChoice = ["A", "B", "C", "D"].find((choice) => choice !== session.questions[0].correct);
   const wrong = service.answer({
     sessionId: session.id,
     userId: "u1",
-    option: "D",
+    option: wrongChoice,
   });
   assert.equal(wrong.status, "failed");
   assert.equal(service.getSession(session.id), null);
@@ -126,22 +134,22 @@ test("NewbieQuizService handles pass/fail flow", () => {
   const first = service.answer({
     sessionId: secondSession.id,
     userId: "u1",
-    option: "A",
+    option: secondSession.questions[0].correct,
   });
   assert.equal(first.status, "next");
-  assert.equal(first.nextQuestion.prompt, QUESTIONS[1].prompt);
+  assert.equal(first.total, 2);
 
   const pass = service.answer({
     sessionId: secondSession.id,
     userId: "u1",
-    option: "B",
+    option: secondSession.questions[1].correct,
   });
   assert.equal(pass.status, "passed");
   assert.equal(service.getSession(secondSession.id), null);
 });
 
-test("default newbie question list has five questions", () => {
-  assert.equal(DEFAULT_NEWBIE_QUESTIONS.length, 5);
+test("default newbie question list has enough questions for random picking", () => {
+  assert.equal(DEFAULT_NEWBIE_QUESTIONS.length >= 5, true);
 });
 
 test("createNewbieQuizResultPanel renders components-v2 result card", () => {

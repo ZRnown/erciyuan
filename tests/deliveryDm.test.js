@@ -40,7 +40,7 @@ test("createDeliveryDmPanel renders screenshot-like card with download buttons",
     .filter((component) => component.type === 10)
     .map((component) => component.content);
 
-  assert.equal(textDisplays.some((content) => content.includes("Hash Brown")), true);
+  assert.equal(textDisplays.some((content) => content.includes("Sylvie's Time")), true);
   assert.equal(textDisplays.some((content) => content.includes("您今天的下载额度：1/10")), true);
   assert.equal(textDisplays.some((content) => content.includes("附件1")), true);
   assert.equal(textDisplays.some((content) => content.includes("JSON角色卡")), false);

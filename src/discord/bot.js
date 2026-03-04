@@ -1192,7 +1192,7 @@ async function handleNewbieVerify(interaction, deps) {
 
   await interaction.reply(
     createNewbieQuizEntryPanel({
-      questionCount: deps.newbieQuiz.questions.length,
+      questionCount: deps.newbieQuiz.questionCount,
     }),
   );
 }
@@ -1393,10 +1393,10 @@ async function handleButton(interaction, deps) {
 
       await interaction.reply(
         createNewbieQuizQuestionPanel({
-          question: firstQuestion,
+          question: session.questions[0] ?? firstQuestion,
           sessionId: session.id,
           index: 0,
-          total: deps.newbieQuiz.questions.length,
+          total: session.total,
           includeFlags: interaction.inGuild(),
         }),
       );
@@ -1475,7 +1475,7 @@ async function handleButton(interaction, deps) {
             question: result.nextQuestion,
             sessionId: newbieAction.sessionId,
             index: result.index,
-            total: deps.newbieQuiz.questions.length,
+            total: result.total,
             includeFlags: false,
           }),
         );

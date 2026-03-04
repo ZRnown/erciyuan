@@ -62,7 +62,7 @@ function attachmentNote(attachment) {
 
 function buildMetaText(asset, quotaText, sentAt) {
   return [
-    "## ✦ Hash Brown ✦",
+    "## ✦ Sylvie's Time ✦",
     formatDateTime(sentAt),
     "",
     `链接：${asset?.sourceUrl ?? "未知"}`,
